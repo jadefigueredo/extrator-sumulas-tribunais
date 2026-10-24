@@ -1,0 +1,43 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "extrator-sumulas-tribunais"
+version = "0.1.0"
+description = "Coleta PDFs de súmulas de tribunais brasileiros e extrai os campos em JSON."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+authors = [{ name = "Jade Figueredo" }]
+dependencies = [
+    "aiohttp>=3.9,<4",
+    "beautifulsoup4>=4.12,<5",
+    "pdfplumber>=0.11,<0.12",
+]
+
+[project.optional-dependencies]
+dev = [
+    "fpdf2>=2.7,<3",
+    "pytest>=8,<9",
+    "pytest-asyncio>=0.24",
+    "ruff>=0.6",
+]
+
+[project.scripts]
+sumulas = "sumulas.__main__:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "B", "UP", "SIM"]
