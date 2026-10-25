@@ -1,6 +1,7 @@
 services:
   extrator:
     build: .
+    user: "${UID:-1000}:${GID:-1000}"
     volumes:
       - ./data:/data
 

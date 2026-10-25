@@ -13,5 +13,5 @@ RUN pip install .
 RUN useradd --create-home extrator
 USER extrator
 
+ENV SUMULAS_OUTPUT=/data
 ENTRYPOINT ["python", "-m", "sumulas"]
-CMD ["--output", "/data"]
