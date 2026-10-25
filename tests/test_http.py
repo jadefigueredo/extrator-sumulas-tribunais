@@ -2,7 +2,7 @@ import pytest
 from aiohttp import web
 from aiohttp.test_utils import TestServer
 
-from sumulas.http import FetchError, HttpClient
+from sumulas.http import DEFAULT_HEADERS, FetchError, HttpClient
 
 
 @pytest.fixture
@@ -57,3 +57,20 @@ async def test_connection_error_becomes_fetch_error():
     async with HttpClient(backoff_base=0, max_attempts=2) as client:
         with pytest.raises(FetchError):
             await client.get_bytes("http://127.0.0.1:9/nada")
+
+
+async def test_sends_browser_like_headers():
+    """O WAF de alguns tribunais barra clientes sem headers de navegador."""
+    seen: dict[str, str] = {}
+
+    async def echo(request):
+        seen.update(request.headers)
+        return web.Response(body=b"ok")
+
+    app = web.Application()
+    app.router.add_get("/echo", echo)
+    async with TestServer(app) as server, HttpClient(backoff_base=0) as client:
+        await client.get_bytes(str(server.make_url("/echo")))
+
+    for key, value in DEFAULT_HEADERS.items():
+        assert seen.get(key) == value
