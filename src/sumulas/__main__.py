@@ -6,6 +6,7 @@ import argparse
 import asyncio
 import json
 import logging
+import os
 import sys
 from pathlib import Path
 
@@ -22,14 +23,27 @@ def parse_args(argv: list[str] | None = None) -> argparse.Namespace:
     parser.add_argument(
         "tribunais",
         nargs="*",
-        choices=sorted(TRIBUNAIS),
-        default=sorted(TRIBUNAIS),
-        help="tribunais a coletar (padrão: todos)",
+        metavar="TRIBUNAL",
+        help=f"tribunais a coletar: {', '.join(sorted(TRIBUNAIS))} (padrão: todos)",
     )
-    parser.add_argument("-o", "--output", type=Path, default=Path("data"), help="pasta de saída")
+    parser.add_argument(
+        "-o",
+        "--output",
+        type=Path,
+        default=Path(os.environ.get("SUMULAS_OUTPUT", "data")),
+        help="pasta de saída (env: SUMULAS_OUTPUT)",
+    )
     parser.add_argument("--concurrency", type=int, default=4, help="downloads simultâneos")
     parser.add_argument("-v", "--verbose", action="store_true")
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+
+    unknown = [t for t in args.tribunais if t not in TRIBUNAIS]
+    if unknown:
+        parser.error(
+            f"tribunal desconhecido: {', '.join(unknown)} (opções {', '.join(sorted(TRIBUNAIS))})"
+        )
+    args.tribunais = list(dict.fromkeys(args.tribunais)) or sorted(TRIBUNAIS)
+    return args
 
 
 async def run(args: argparse.Namespace) -> list[Result]:
