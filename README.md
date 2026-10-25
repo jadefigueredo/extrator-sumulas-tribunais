@@ -13,10 +13,13 @@ Coleta as súmulas que os tribunais publicam em PDF, extrai o texto e transforma
 
 ## Como rodar
 
-Com Docker, sem instalar nada além dele:
+Com Docker, sem instalar nada além dele. Primeiro crie um `.env` com os IDs do seu
+usuário, para o container gravar em `data/` com a sua permissão (e não como root):
 
 ```bash
-docker compose up --build
+printf 'UID=%s\nGID=%s\n' "$(id -u)" "$(id -g)" > .env
+docker compose up --build                 # todos os tribunais
+docker compose run --rm extrator tre-pa   # só o TRE-PA
 ```
 
 Os arquivos `data/tjpa.json` e `data/tre-pa.json` aparecem na pasta do projeto.
@@ -60,7 +63,7 @@ Documentos que falham no download ou na conversão vão para `falhas` sem interr
 página de listagem ──► links dos PDFs ──► download ──► texto (pdfplumber) ──► parser do tribunal ──► JSON
 ```
 
-- **Download** (`http.py`): `aiohttp` com limite de concorrência, timeout e retry com backoff exponencial e jitter para erros transitórios (timeouts, 429, 5xx). Erros 4xx não são repetidos.
+- **Download** (`http.py`): `httpx` em HTTP/2 com headers de navegador — o WAF de alguns tribunais (ex.: Akamai no TRE-PA) responde 403 a clientes HTTP/1.1 ou sem cara de navegador. Tem limite de concorrência, timeout e retry com backoff exponencial e jitter para erros transitórios (timeouts, 429, 5xx); erros 4xx não são repetidos.
 - **Conversão** (`pdf.py`): `pdfplumber`, sem serviços externos. O pipeline recebe o conversor como parâmetro, então dá para trocar de biblioteca sem mexer nos parsers.
 - **Extração** (`tribunais/`): cada tribunal sabe onde estão seus PDFs e como ler um documento. O texto é achatado numa linha só e lido por marcadores textuais (`Referências:`, `Publicada no`, `Data de Aprovação`), porque a quebra de linha que sai de um PDF não é confiável.
 
